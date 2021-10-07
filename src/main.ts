@@ -7,18 +7,14 @@ async function main() {
   await coinext.connect();
 
   const {
-    authenticated,
-    errorMessage,
-    isAuthenticatorEnabled
-  } = await coinext.loginBySecret()
-
+    isAuthenticatorEnabled,
+    authenticated
+  } = await coinext.login('', '');
 
   console.log('authorized', authenticated);
-  console.log('errorMessage', errorMessage);
   console.log('isAuthenticatorEnabled', isAuthenticatorEnabled);
 
-
-  coinext.disconnect();
+  await coinext.disconnect();
 }
 
 main().finally();

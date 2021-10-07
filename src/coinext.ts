@@ -1,5 +1,5 @@
 import WebSocket from 'ws';
-import config from "./config";
+import config from './config';
 import crypto from 'crypto';
 
 enum SocketOperation {
@@ -73,6 +73,14 @@ export type ILoginResponse = {
 export type IDepositInfoResponse = {
   currencyDepositAddress: string[];
   errorMessage: string;
+};
+
+export type ISimpleLoginResponse = {
+  errorMessage: string;
+  authenticated: boolean;
+  isAuthenticatorEnabled: boolean;
+  token: string;
+  userId: string;
 };
 
 export type InstrumentSymbol = 'BTCBRL' | 'USDTBRL';
@@ -231,7 +239,8 @@ class Coinext {
   private index: number = 2;
   private omsId: number = 1;
   private minimumSystemIndexIncrement: number = 2;
-  private socket: WebSocket;
+  private socket: WebSocket | null = null;
+
   private products: Product[] = [
     {
       ProductId: 1,
@@ -303,11 +312,9 @@ class Coinext {
     },
   ];
 
-  constructor() {}
-
   connect = async (): Promise<void> => {
     const socket = new Promise<WebSocket>(function (resolve, reject) {
-      const server = new WebSocket(`${process.env.AP_URL}`);
+      const server = new WebSocket(`${config.API_V2_URL}`);
       server.onopen = function () {
         resolve(server);
       };
@@ -320,7 +327,7 @@ class Coinext {
   };
 
   disconnect = async (): Promise<void> => {
-    await this.socket.close();
+    await this.socket?.close();
   };
 
   private callExternalApi = (apiServiceName: IServiceName, payload: IPayload): Promise<IPayload> => {
@@ -335,20 +342,18 @@ class Coinext {
     };
 
     const message = JSON.stringify(payloadRequest);
-
-    this.socket.send(message);
-
+    this.socket?.send(message);
     this.index += this.minimumSystemIndexIncrement;
 
     return new Promise((resolve, reject) => {
-      this.socket.on('message', (reply: any) => {
+      this.socket?.on('message', (reply: string) => {
         try {
           const {
             m: responseType,
             n: responseFunction,
             o: response,
             i: reponseIndex,
-          } = JSON.parse(reply.toString()) as IPayloadRequest;
+          } = JSON.parse(reply) as IPayloadRequest;
 
           if (responseType === SocketOperation.Error) {
             reject(JSON.parse(response));
@@ -389,12 +394,56 @@ class Coinext {
     };
   }
 
+  login = async (username: string, password: string): Promise<ISimpleLoginResponse> => {
+    try {
+      const apiResponse = await this.callExternalApi('AuthenticateUser', {
+        UserName: username || '',
+        Password: password || '',
+      });
+
+      console.log(username, password, apiResponse);
+
+      const {
+        errormsg: errorMessage,
+        Authenticated: authenticated,
+        Requires2FA: isAuthenticatorEnabled,
+        SessionToken: sessionToken,
+        User: user,
+      } = apiResponse;
+
+      let userId = '';
+
+      if (user) {
+        const parsedUser = JSON.parse(user.toString());
+        const {UserId} = parsedUser;
+        userId = UserId;
+      }
+
+      return {
+        authenticated: authenticated as boolean,
+        isAuthenticatorEnabled: isAuthenticatorEnabled as boolean,
+        token: sessionToken as string,
+        userId,
+        errorMessage: errorMessage as string,
+      };
+    } catch (e) {
+      console.log(e);
+      return {
+        authenticated: false,
+        isAuthenticatorEnabled: false,
+        token: '',
+        userId: '',
+        errorMessage: 'Unknown login error',
+      };
+    }
+  };
+
   loginBySecret = async (): Promise<ILoginResponse> => {
     try {
       const authenticationPayload = Coinext.authPayload(
-        `${process.env.AP_USER}`,
-        `${process.env.AP_KEY}`,
-        `${process.env.AP_SECRET}`,
+        `${config.AP_USER}`,
+        `${config.AP_KEY}`,
+        `${config.AP_SECRET}`,
       );
 
       type IGetDepositInfo = {
@@ -417,7 +466,7 @@ class Coinext {
 
       const apiResponse = await this.callExternalApi('AuthenticateUser', authenticationPayload);
 
-      const { errormsg: errorMessage } = apiResponse as IGetDepositInfo;
+      const {errormsg: errorMessage} = apiResponse as IGetDepositInfo;
 
       if (errorMessage) {
         return Promise.resolve({
@@ -430,7 +479,7 @@ class Coinext {
       const {
         errormsg,
         Authenticated: authenticated,
-        User: { AccountId: accountId },
+        User: {AccountId: accountId},
       } = apiResponse as IGetDepositInfo;
 
       return Promise.resolve({
@@ -459,7 +508,7 @@ class Coinext {
       statuscode: number;
     };
 
-    const [{ ProductId }] = this.products.filter(product => product.Product === productName);
+    const [{ProductId}] = this.products.filter(product => product.Product === productName);
 
     try {
       const apiResponse = (await this.callExternalApi('GetDepositInfo', {
@@ -504,7 +553,7 @@ class Coinext {
     }
   };
 
-  getBookOrders = async ({ instrumentId, howMany, side }: IBookOrderResquest): Promise<IBookOrderResponse> => {
+  getBookOrders = async ({instrumentId, howMany, side}: IBookOrderResquest): Promise<IBookOrderResponse> => {
     try {
       const apiResponse = await this.callExternalApi('GetL2Snapshot', {
         OMSId: this.omsId,
@@ -550,7 +599,7 @@ class Coinext {
 
   getInstrumentIdBySymbol = async (instrumentSymbol: InstrumentSymbol): Promise<IInstrumentIdResponse> => {
     try {
-      const apiResponse = await this.callExternalApi('GetInstruments', { omsId: this.omsId });
+      const apiResponse = await this.callExternalApi('GetInstruments', {omsId: this.omsId});
 
       const instruments = apiResponse as unknown as IInstrument[];
 
@@ -607,7 +656,7 @@ class Coinext {
       })) as unknown as IGetDeposits[];
 
       apiResponse.forEach(deposit => {
-        const [{ Product }] = this.products.filter(product => product.ProductId === deposit.ProductId);
+        const [{Product}] = this.products.filter(product => product.ProductId === deposit.ProductId);
         deposit.DepositInfo = JSON.parse(deposit.DepositInfo.toString());
         deposits.push({
           productId: deposit.ProductId,
@@ -662,7 +711,7 @@ class Coinext {
       detail: string;
     };
 
-    const [{ ProductId }] = this.products.filter(product => product.Product === productName);
+    const [{ProductId}] = this.products.filter(product => product.Product === productName);
 
     try {
       const apiResponse = (await this.callExternalApi('TransferFunds', {
@@ -674,7 +723,7 @@ class Coinext {
         Notes: notes || '',
       })) as unknown as ITransferFunds;
 
-      const { result, errormsg, detail } = apiResponse;
+      const {result, errormsg, detail} = apiResponse;
 
       let retorno: ITransferFundsResponse = {
         success: result,

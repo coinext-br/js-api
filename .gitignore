@@ -53,3 +53,5 @@ android/keystores/debug.keystore
 scratch*
 yarn-error.log
 
+.env
+yarn.lock
