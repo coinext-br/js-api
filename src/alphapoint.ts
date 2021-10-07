@@ -32,9 +32,9 @@ const RPCCall_ReplyWaitObjects: {
 
 export const websocketSubjects = {
   instance: new rx.BehaviorSubject<WebSocket | null>(null),
-  connect: new rx.BehaviorSubject<{kind: string} | null>(null),
-  close: new rx.BehaviorSubject<{kind: string} | null>(null),
-  message: new rx.BehaviorSubject<{data: string} | null>(null),
+  connect: new rx.BehaviorSubject<{ kind: string } | null>(null),
+  close: new rx.BehaviorSubject<{ kind: string } | null>(null),
+  message: new rx.BehaviorSubject<{ data: string } | null>(null),
   error: new rx.BehaviorSubject<Event | null>(null),
 };
 
@@ -645,7 +645,8 @@ interface RegisterNewUserPayload {
 class AlphaPoint {
   private services: AlphaPointService | null = null;
 
-  constructor() {}
+  constructor() {
+  }
 
   connect(username = PUBLIC_USER, password: string = '') {
     this.services = new AlphaPointService();
@@ -697,7 +698,7 @@ class AlphaPoint {
 
   async getUserInfo(apUserId: number): Promise<APUserInfo> {
     const response = await this.services!.callService('GetUserInfo',
-        {UserId: apUserId});
+      {UserId: apUserId});
     return (response as unknown) as APUserInfo;
   }
 
@@ -706,26 +707,26 @@ class AlphaPoint {
     return response && response.ManualCode ? response.ManualCode as string : null;
   }
 
-  async getUserConfigs(apUserId: number): Promise<{[name: string]: string}> {
+  async getUserConfigs(apUserId: number): Promise<{ [name: string]: string }> {
     return new Promise((resolve, reject) => {
       this.services &&
-        this.services
-          .callService('GetUserConfig', {
-            UserId: apUserId,
-          })
-          .then((data) => {
-            const ucData = (data as unknown) as Array<{
-              Key: string;
-              Value: string;
-            }>;
-            const result: {[key: string]: string} = {};
+      this.services
+        .callService('GetUserConfig', {
+          UserId: apUserId,
+        })
+        .then((data) => {
+          const ucData = (data as unknown) as Array<{
+            Key: string;
+            Value: string;
+          }>;
+          const result: { [key: string]: string } = {};
 
-            for (const entry of ucData) {
-              result[entry.Key] = entry.Value;
-            }
-            resolve(result);
-          })
-          .catch((e) => reject(e));
+          for (const entry of ucData) {
+            result[entry.Key] = entry.Value;
+          }
+          resolve(result);
+        })
+        .catch((e) => reject(e));
     });
   }
 
@@ -852,12 +853,12 @@ class AlphaPoint {
   }
 
   createDepositTicket({
-    accountId,
-    productId,
-    currencyCode,
-    amount,
-    depositInfo,
-  }: APDepositRequest) {
+                        accountId,
+                        productId,
+                        currencyCode,
+                        amount,
+                        depositInfo,
+                      }: APDepositRequest) {
     return (
       this.services &&
       this.services.callService('CreateDepositTicket', {
@@ -890,15 +891,15 @@ class AlphaPoint {
       },
     );
 
-    return (response.TemplateTypes as unknown) as Array<{TemplateName: string}>;
+    return (response.TemplateTypes as unknown) as Array<{ TemplateName: string }>;
   }
 
   async createWithdrawTicket({
-    accountId,
-    productId,
-    amount,
-    formData,
-  }: APWithdrawRequest) {
+                               accountId,
+                               productId,
+                               amount,
+                               formData,
+                             }: APWithdrawRequest) {
     if (!this.services) {
       throw new Error(
         '[ALPHAPOINT] createWithdrawTicket: this.services is null?!',
@@ -932,13 +933,13 @@ class AlphaPoint {
   }
 
   async createCryptoWithdrawTicket({
-    accountId,
-    productId,
-    amount,
-    address,
-    destinationTag,
-    memo
-  }: APCryptoWithdrawRequest) {
+                                     accountId,
+                                     productId,
+                                     amount,
+                                     address,
+                                     destinationTag,
+                                     memo
+                                   }: APCryptoWithdrawRequest) {
     const formData: APCryptoWithdrawRequestFormData = {
       ExternalAddress: address,
       Comment: '',
@@ -953,16 +954,16 @@ class AlphaPoint {
   }
 
   async createFiatWithdrawTicket({
-    accountId,
-    productId,
-    amount,
-    fullName,
-    ssn,
-    account,
-  }: APFiatWithdrawRequest) {
+                                   accountId,
+                                   productId,
+                                   amount,
+                                   fullName,
+                                   ssn,
+                                   account,
+                                 }: APFiatWithdrawRequest) {
     let bankAddress;
     let bankAccountNumber;
-    let comment: {[key: string]: string} = {};
+    let comment: { [key: string]: string } = {};
 
     if (account.type === 'pix') {
       const a = account as APPixAccount;
@@ -1011,22 +1012,22 @@ class AlphaPoint {
     cb: (tickers: Tickers) => any,
   ) {
     this.services &&
-      (await this.services.subscribeService(
-        'SubscribeTicker',
-        ['TickerDataUpdateEvent'],
-        {
-          OMSId: 1,
-          InstrumentId: instrumentId,
-          Interval: interval,
-          IncludeLastCount: count,
-        },
-        (response) => {
-          const tickers = (response as unknown) as Tickers;
-          if (tickers && tickers.length > 0 && tickers[0][8] === instrumentId) {
-            cb(tickers);
-          }
-        },
-      ));
+    (await this.services.subscribeService(
+      'SubscribeTicker',
+      ['TickerDataUpdateEvent'],
+      {
+        OMSId: 1,
+        InstrumentId: instrumentId,
+        Interval: interval,
+        IncludeLastCount: count,
+      },
+      (response) => {
+        const tickers = (response as unknown) as Tickers;
+        if (tickers && tickers.length > 0 && tickers[0][8] === instrumentId) {
+          cb(tickers);
+        }
+      },
+    ));
   }
 
   async subscribeLevel1(
@@ -1039,16 +1040,16 @@ class AlphaPoint {
     }
 
     this.services &&
-      (await this.services.subscribeService(
-        'SubscribeLevel1',
-        ['Level1UpdateEvent'],
-        payload,
-        (data) => {
-          if (data.InstrumentId === instrumentId) {
-            cb((data as unknown) as APLevel1Update);
-          }
-        },
-      ));
+    (await this.services.subscribeService(
+      'SubscribeLevel1',
+      ['Level1UpdateEvent'],
+      payload,
+      (data) => {
+        if (data.InstrumentId === instrumentId) {
+          cb((data as unknown) as APLevel1Update);
+        }
+      },
+    ));
   }
 
   async getAccountPositions(accountId: number) {
@@ -1066,15 +1067,15 @@ class AlphaPoint {
   }
 
   getOrderFee({
-    accountId,
-    buy,
-    marketOrder,
-    instrumentId,
-    productId,
-    quantity,
-    price,
-    maker,
-  }: APOrderFeeRequest) {
+                accountId,
+                buy,
+                marketOrder,
+                instrumentId,
+                productId,
+                quantity,
+                price,
+                maker,
+              }: APOrderFeeRequest) {
     const payload: APPayload = {
       OMSId: 1,
       AccountId: accountId,
@@ -1114,13 +1115,13 @@ class AlphaPoint {
   }
 
   async sendOrder({
-    accountId,
-    instrumentId,
-    marketOrder,
-    buy,
-    quantity,
-    limitPrice,
-  }: APOrderRequest) {
+                    accountId,
+                    instrumentId,
+                    marketOrder,
+                    buy,
+                    quantity,
+                    limitPrice,
+                  }: APOrderRequest) {
     if (!this.services) {
       throw new Error('[ALPHAPOINT] sendOrder: this.services is null?!');
     }
@@ -1171,21 +1172,21 @@ class AlphaPoint {
       IncludeLastCount: 100,
     };
     this.services &&
-      (await this.services.subscribeService(
-        'SubscribeTrades',
-        ['TradeDataUpdateEvent'],
-        payload,
-        (response) => {
-          const tradeArray = (response as unknown) as Array<Array<number>>;
-          if (
-            tradeArray &&
-            tradeArray.length &&
-            tradeArray[0][1] === instrumentId
-          ) {
-            cb(tradeArray);
-          }
-        },
-      ));
+    (await this.services.subscribeService(
+      'SubscribeTrades',
+      ['TradeDataUpdateEvent'],
+      payload,
+      (response) => {
+        const tradeArray = (response as unknown) as Array<Array<number>>;
+        if (
+          tradeArray &&
+          tradeArray.length &&
+          tradeArray[0][1] === instrumentId
+        ) {
+          cb(tradeArray);
+        }
+      },
+    ));
   }
 
   async subscribeLevel2(
@@ -1195,48 +1196,48 @@ class AlphaPoint {
   ) {
     instrumentId = Number(instrumentId); // better safe
     this.services &&
-      (await this.services.subscribeService(
-        'SubscribeLevel2',
-        ['Level2UpdateEvent'],
-        {
-          OMSId: 1,
-          InstrumentId: instrumentId,
-          Depth: depth,
-        },
-        (response) => {
-          const items = (response as unknown) as Array<Array<number>>;
-          if (items && items.length > 0) {
-            const ordersInstrumentId = items[0][7];
-            if (instrumentId === ordersInstrumentId) {
-              cb(items);
-            }
+    (await this.services.subscribeService(
+      'SubscribeLevel2',
+      ['Level2UpdateEvent'],
+      {
+        OMSId: 1,
+        InstrumentId: instrumentId,
+        Depth: depth,
+      },
+      (response) => {
+        const items = (response as unknown) as Array<Array<number>>;
+        if (items && items.length > 0) {
+          const ordersInstrumentId = items[0][7];
+          if (instrumentId === ordersInstrumentId) {
+            cb(items);
           }
-        },
-      ));
+        }
+      },
+    ));
   }
 
   async unsubscribeLevel1(instrumentId: number) {
     this.services &&
-      (await this.services.callService('UnsubscribeLevel1', {
-        OMSId: 1,
-        InstrumentId: instrumentId,
-      }));
+    (await this.services.callService('UnsubscribeLevel1', {
+      OMSId: 1,
+      InstrumentId: instrumentId,
+    }));
   }
 
   async unsubscribeLevel2(instrumentId: number) {
     this.services &&
-      (await this.services.callService('UnsubscribeLevel2', {
-        OMSId: 1,
-        InstrumentId: instrumentId,
-      }));
+    (await this.services.callService('UnsubscribeLevel2', {
+      OMSId: 1,
+      InstrumentId: instrumentId,
+    }));
   }
 
   async unsubscribeTicker(instrumentId: number) {
     this.services &&
-      (await this.services.callService('UnsubscribeTicker', {
-        OMSId: 1,
-        InstrumentId: instrumentId,
-      }));
+    (await this.services.callService('UnsubscribeTicker', {
+      OMSId: 1,
+      InstrumentId: instrumentId,
+    }));
   }
 
   async subscribeAccountEvents(
