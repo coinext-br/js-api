@@ -5,8 +5,8 @@
   "types": "lib/index.d.ts",
   "private": true,
   "scripts": {
-    "test": "cross-env ./node_modules/.bin/jest -i --silent",
-    "postinstall": "yarn tsc"
+    "build": "yarn tsc",
+    "test": "cross-env ./node_modules/.bin/jest -i --silent"
   },
   "dependencies": {
     "@types/ws": "^7.4.7",
