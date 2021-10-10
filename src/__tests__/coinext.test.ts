@@ -53,4 +53,12 @@ describe('Coinext', () => {
       expect(errorMessage).toEqual('Invalid username or password');
     });
   });
+
+  test('getTickerHistory', async () => {
+    const insterval = 15 * 60;
+    const fromDate = new Date(Date.now() - 1000 * 60 * 60);
+    const toDate = new Date();
+    const {history} = await coinext.getTickerHistory('BTC', insterval, fromDate, toDate);
+    expect(history?.length).toEqual(4);
+  });
 });

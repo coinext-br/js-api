@@ -82,10 +82,10 @@ export type ISimpleLoginResponse = {
   authenticated: boolean;
   isAuthenticatorEnabled: boolean;
   token: string;
-  userId: string;
+  userId: number;
 };
 
-export type InstrumentSymbol = 'BTCBRL' | 'USDTBRL';
+export type InstrumentSymbol = 'BTCBRL' | 'USDTBRL' | string;
 
 enum ProductId {
   Blr = 1,
@@ -356,8 +356,6 @@ class Coinext {
         Password: password || '',
       });
 
-      console.log(username, password, apiResponse);
-
       const {
         errormsg: errorMessage,
         Authenticated: authenticated,
@@ -366,13 +364,7 @@ class Coinext {
         User: user,
       } = apiResponse;
 
-      let userId = '';
-
-      if (user) {
-        const parsedUser = JSON.parse(user.toString());
-        const {UserId} = parsedUser;
-        userId = UserId;
-      }
+      const userId = user ? (user as IPayload) ['UserId'] as number : 0;
 
       return {
         authenticated: authenticated as boolean,
@@ -387,7 +379,7 @@ class Coinext {
         authenticated: false,
         isAuthenticatorEnabled: false,
         token: '',
-        userId: '',
+        userId: 0,
         errorMessage: 'Unknown login error',
       };
     }
@@ -576,6 +568,38 @@ class Coinext {
       });
     }
   };
+
+  async safeCall(serviceName: IServiceName, payload: any) {
+    try {
+      const response = await this.callExternalApi(serviceName, payload);
+      return {response, errorMessage: ''}
+    } catch(e) {
+      console.error(e);
+      return { errorMessage: `${e}` };
+    }
+  }
+
+  getTickerHistory = async (coin: string, intervalInSeconds: number, fromDate: Date, toDate: Date) => {
+    const instrument = this.instrumentForCoin(coin);
+    if (instrument) {
+      const {response, errorMessage} = await this.safeCall('GetTickerHistory', {
+        OMSId: 1,
+        InstrumentId: instrument.InstrumentId,
+        Interval: intervalInSeconds,
+        FromDate: fromDate.toISOString(),
+        ToDate: toDate.toISOString()
+      });
+
+      return {history: response, errorMessage};
+    } else {
+      return {history: [], errorMessage: `Instrument not found: ${coin}/BRL`};
+    }
+  }
+
+  private instrumentForCoin(coin: string) {
+    const symbol = `${coin.toUpperCase()}BRL`;
+    return this.getInstruments().find(i => i.Symbol === symbol);
+  }
 
   getDeposits = async (accountId: number): Promise<IGetDepositsResponse> => {
     type IGetDeposits = {
