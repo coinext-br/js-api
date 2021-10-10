@@ -28,6 +28,8 @@ type IServiceName =
   | 'GetL2Snapshot'
   | 'SubscribeAccountEvents'
   | 'GetDeposits'
+  | 'GetTickerHistory'
+  | 'GetProducts'
   | 'TransferFunds';
 
 export type DepositInfo = {
@@ -241,93 +243,46 @@ class Coinext {
   private minimumSystemIndexIncrement: number = 2;
   private socket: WebSocket | null = null;
 
-  private products: Product[] = [
-    {
-      ProductId: 1,
-      Product: 'BTC',
-    },
-    {
-      ProductId: 2,
-      Product: 'LTC',
-    },
-    {
-      ProductId: 3,
-      Product: 'ETH',
-    },
-    {
-      ProductId: 4,
-      Product: 'XRP',
-    },
-    {
-      ProductId: 5,
-      Product: 'BRL',
-    },
-    {
-      ProductId: 6,
-      Product: 'BCH',
-    },
-    {
-      ProductId: 7,
-      Product: 'USDT',
-    },
-    {
-      ProductId: 8,
-      Product: 'LINK',
-    },
-    {
-      ProductId: 9,
-      Product: 'DOGE',
-    },
-    {
-      ProductId: 10,
-      Product: 'ADA',
-    },
-    {
-      ProductId: 11,
-      Product: 'EOS',
-    },
-    {
-      ProductId: 12,
-      Product: 'XLM',
-    },
-    {
-      ProductId: 13,
-      Product: 'CHZ',
-    },
-    {
-      ProductId: 14,
-      Product: 'SUSHI',
-    },
-    {
-      ProductId: 15,
-      Product: 'USDC',
-    },
-    {
-      ProductId: 16,
-      Product: 'AXS',
-    },
-    {
-      ProductId: 17,
-      Product: 'BNB',
-    },
-  ];
+  private products: Product[] = [];
+  private instruments: IInstrument[] = [];
 
   connect = async (): Promise<void> => {
-    const socket = new Promise<WebSocket>(function (resolve, reject) {
+    await new Promise<WebSocket>((resolve, reject) => {
       const server = new WebSocket(`${config.API_V2_URL}`);
-      server.onopen = function () {
-        resolve(server);
+      server.onopen = async () => {
+        this.socket = server;
+        try {
+          await this.refreshProductsAndInstruments()
+          resolve(server);
+        } catch(e) {
+          reject(e)
+        }
       };
       server.onerror = function (err: any) {
         reject(err);
       };
     });
-
-    this.socket = await socket;
   };
 
   disconnect = async (): Promise<void> => {
     await this.socket?.close();
+  };
+
+  getCoins = () => {
+    return this.products.map(p => p.Product);
+  };
+
+  getInstruments = () => {
+    return this.instruments.filter(i => !i.IsDisable);
+  };
+
+  refreshProductsAndInstruments = async () => {
+    const instrumentsResponse = await this.callExternalApi('GetInstruments', {OMSId: this.omsId});
+    this.instruments = instrumentsResponse as unknown as IInstrument[];
+
+    const productsResponse = await this.callExternalApi('GetProducts', {OMSId: this.omsId});
+    const pr: IPayload[] = productsResponse as unknown as IPayload[];
+    this.products = pr.map(p => ({ProductId: Number(p.ProductId), Product: p.Product as unknown as ProductName}));
   };
 
   private callExternalApi = (apiServiceName: IServiceName, payload: IPayload): Promise<IPayload> => {
@@ -342,7 +297,7 @@ class Coinext {
     };
 
     const message = JSON.stringify(payloadRequest);
-    this.socket?.send(message);
+    this.socket!.send(message);
     this.index += this.minimumSystemIndexIncrement;
 
     return new Promise((resolve, reject) => {
