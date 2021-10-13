@@ -1,12 +1,15 @@
 {
   "name": "coinext-js-api",
   "version": "1.0.0",
+  "description": "Coinext Javascript API",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "private": true,
   "scripts": {
     "build": "yarn tsc",
-    "test": "cross-env ./node_modules/.bin/jest -i --silent"
+    "test": "cross-env ./node_modules/.bin/jest -i --silent",
+    "prepare": "yarn run build",
+    "prepublishOnly" : "yarn run test"
   },
   "dependencies": {
     "@types/ws": "^7.4.7",
