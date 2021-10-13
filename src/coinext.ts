@@ -316,6 +316,12 @@ class Coinext {
           }
 
           if (responseType === SocketOperation.Reply) {
+            if(response.length === 0){
+              reject({
+                errorMessage: `Response body was empty from service ${apiServiceName}`,
+              });
+              return;
+            }
             if (responseFunction === apiServiceName) {
               if (reponseIndex === thisRequestIndex) {
                 resolve(JSON.parse(response));
@@ -569,7 +575,7 @@ class Coinext {
     }
   };
 
-  async safeCall(serviceName: IServiceName, payload: any) {
+  async safeCall(serviceName: IServiceName, payload: IPayload) {
     try {
       const response = await this.callExternalApi(serviceName, payload);
       return {response, errorMessage: ''}
