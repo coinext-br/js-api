@@ -23,7 +23,7 @@ describe('Coinext', () => {
   });
 
   describe('login', () => {
-    test('login successful, no 2FA', async () => {
+    test.skip('login successful, no 2FA', async () => {
       const {
         userId,
         token,
