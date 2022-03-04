@@ -237,5 +237,6 @@ export type ISubscribeAccountEventsResponse = {
 
 export interface SubscriptionResponse {
   firstPayload: IPayload;
-  disposer: () => void;
 }
+
+export type EventCallback = (p: IPayload) => void;
