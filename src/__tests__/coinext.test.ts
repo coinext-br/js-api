@@ -1,5 +1,6 @@
 import { forTimeout } from "../awaits";
 import { Coinext } from "../coinext";
+import { InstrumentTradeHistory } from "../coinext/types";
 import { WebSocketServerMock } from "./ws_server_mock";
 
 describe("Coinext", () => {
@@ -38,7 +39,7 @@ describe("Coinext", () => {
         "gandra@gmail.com",
         "hureia123Seca"
       );
-      expect(userId).toEqual(12);
+      expect(userId).toEqual(11);
       expect(token).toBeTruthy();
       expect(isAuthenticatorEnabled).toBeFalsy();
       expect(authenticated).toBeTruthy();
@@ -67,23 +68,48 @@ describe("Coinext", () => {
   });
 
   describe("subscribeToTicker", () => {
+    const UPDATES_INTERVAL = 1800;
+    const TICKER_HISTORY_SIZE = 60;
+    const INSTRUMENT_ID = 1;
+
     test("should get ticker history from the last 24h", async () => {
-      const UPDATES_INTERVAL = 1800;
-      const TICKER_HISTORY_SIZE = 60;
-      const INSTRUMENT_ID = 1;
+      let tickerHistory: InstrumentTradeHistory = [];
 
-      let tickerHistory = {};
-
-      await coinext.subscribeToTicker(INSTRUMENT_ID, UPDATES_INTERVAL, TICKER_HISTORY_SIZE, (tickerUpdate) => {
-        tickerHistory = tickerUpdate;
-      });
+      const dispose = await coinext.subscribeToTicker(
+        INSTRUMENT_ID,
+        UPDATES_INTERVAL,
+        TICKER_HISTORY_SIZE,
+        (tickerUpdate) => {
+          tickerHistory = tickerUpdate;
+        }
+      );
 
       // Giving time for the event to be processed.
       await forTimeout(100);
 
       expect(Object.keys(tickerHistory).length).toBe(59);
 
+      mockedServer.sendEventMessageThroughAllSockets("TickerDataUpdateEvent", [
+        [1501603632000, 2700.33, 2687.01, 2687.01, 2687.01, 24.86100992, 0, 2870.95, 2],
+      ]);
+
+      // Giving time for the event to be processed.
+      await forTimeout(100);
+
+      expect(Object.keys(tickerHistory).length).toBe(1);
+
       await coinext.unsubscribeToTicker(INSTRUMENT_ID);
+      dispose();
+
+      mockedServer.sendEventMessageThroughAllSockets("TickerDataUpdateEvent", [
+        [1501603632000, 2700.33, 2687.01, 2687.01, 2687.01, 24.86100992, 0, 2870.95, 1],
+        [1501603632000, 2700.33, 2687.01, 2687.01, 2687.01, 24.86100992, 0, 2870.95, 1],
+      ]);
+
+      // Giving time for the event to be processed.
+      await forTimeout(100);
+
+      expect(Object.keys(tickerHistory).length).toBe(1);
     });
   });
 });
