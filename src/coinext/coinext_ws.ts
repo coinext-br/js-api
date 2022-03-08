@@ -20,7 +20,7 @@ class CoinextWebSocket {
       server.onopen = async () => {
         this.socket = server;
         this.socket.on("message", (frame: string) => {
-          console.log(`New frame received ${frame}`);
+          // console.log(`New frame received ${frame}`);
 
           const { m: messageType, n: functionName, o: response } = JSON.parse(frame) as IPayloadRequest;
           if (messageType === SocketOperation.Event) {
@@ -102,7 +102,7 @@ class CoinextWebSocket {
   subscribeToEvent = (
     apiServiceName: IServiceName,
     apiEventName: string,
-    callback: (payload: IPayload) => void,
+    callback: (payload: any) => void,
     payload: IPayload
   ) => {
     return new Promise<SubscriptionResponse>((resolve, reject) => {

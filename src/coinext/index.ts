@@ -1,7 +1,9 @@
 import config from "../config";
 import crypto from "crypto";
 import {
+  DefaultAPIResponse,
   DepositInfo,
+  DisposeSubscription,
   IApiBookOrderResponse,
   IBookOrder,
   IBookOrderResponse,
@@ -12,6 +14,7 @@ import {
   IInstrumentIdResponse,
   ILoginResponse,
   InstrumentSymbol,
+  InstrumentTradeHistory,
   IPayload,
   IServiceName,
   ISimpleLoginResponse,
@@ -20,6 +23,7 @@ import {
   ITransferFundsResponse,
   Product,
   ProductName,
+  SubscribeTickerCallback,
 } from "./types";
 import CoinextWebSocket from "./coinext_ws";
 
@@ -29,9 +33,9 @@ class Coinext {
   private products: Product[] = [];
   private instruments: IInstrument[] = [];
 
-  connect = async (): Promise<void> => {
+  connect = async (isTestEnvironment = false): Promise<void> => {
     await new Promise<CoinextWebSocket>((resolve, reject) => {
-      const server = new CoinextWebSocket();
+      const server = new CoinextWebSocket(isTestEnvironment);
       server.connect().then(async () => {
         this.socket = server;
         try {
@@ -470,6 +474,57 @@ class Coinext {
         details: null,
         errorMessage: `Unknown error transfering funds from accountId ${senderAccountId} to ${receiverUsername}`,
       });
+    }
+  };
+
+  subscribeToTicker = async (
+    instrumentId: number,
+    secondsBetweenData: number,
+    lengthOfTickerHistory: number,
+    callback: SubscribeTickerCallback
+  ): Promise<DisposeSubscription> => {
+    try {
+      const payload = {
+        OMSId: this.omsId,
+        InstrumentId: instrumentId,
+        Interval: secondsBetweenData,
+        IncludeLastCount: lengthOfTickerHistory,
+      };
+      const subscriptionResponse = await this.socket?.subscribeToEvent(
+        "SubscribeTicker",
+        "TickerDataUpdateEvent",
+        callback,
+        payload
+      );
+
+      if (subscriptionResponse) {
+        callback(subscriptionResponse.firstPayload as unknown as InstrumentTradeHistory);
+        return subscriptionResponse.dispose;
+      }
+
+      throw new Error("Invalid first response received from SubscribeTicker endpoint");
+    } catch (e) {
+      console.warn(
+        `Exception captured while subscribing to ticker with instrumentId ${instrumentId}. Subscription was not fulfilled.`
+      );
+      throw e;
+    }
+  };
+
+  unsubscribeToTicker = async (instrumentId: number): Promise<DefaultAPIResponse> => {
+    try {
+      const payload = {
+        OMSId: this.omsId,
+        InstrumentId: instrumentId,
+      };
+
+      const response = await this.socket?.callExternalApi("UnsubscribeTicker", payload);
+      return response as unknown as DefaultAPIResponse;
+    } catch (e) {
+      console.warn(
+        `Exception captured while unsubscribing to ticker with instrumentId ${instrumentId}. Unsubscription was not fulfilled.`
+      );
+      throw e;
     }
   };
 }

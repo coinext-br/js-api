@@ -1,5 +1,9 @@
-import WebSocket, { WebSocketServer } from "ws";
+import { WebSocketServer } from "ws";
 import { SocketOperation } from "../coinext/types";
+import DEFAULT_TICKER_SUBSCRIPTION from "../__fixures__/ticker_subscription";
+import DEFAULT_INSTRUMENTS from "../__fixures__/instruments";
+import DEFAULT_PRODUCTS from "../__fixures__/products";
+import DEFAULT_TICKER_HISTORY from "../__fixures__/ticker_history";
 
 interface MockedPackageResponse {
   i?: number;
@@ -26,6 +30,41 @@ export class WebSocketServerMock {
     GetFiveTest: {
       m: SocketOperation.Reply,
       o: JSON.stringify({ value: 5 }),
+    },
+    GetInstruments: {
+      m: SocketOperation.Reply,
+      o: JSON.stringify(DEFAULT_INSTRUMENTS),
+    },
+    GetProducts: {
+      m: SocketOperation.Reply,
+      o: JSON.stringify(DEFAULT_PRODUCTS),
+    },
+    AuthenticateUser: {
+      m: SocketOperation.Reply,
+      o: JSON.stringify({
+        errormsg: "",
+        Authenticated: true,
+        Requires2FA: false,
+        SessionToken: "12",
+        User: { UserId: 11 },
+      }),
+    },
+    GetTickerHistory: {
+      m: SocketOperation.Reply,
+      o: JSON.stringify(DEFAULT_TICKER_HISTORY),
+    },
+    SubscribeTicker: {
+      m: SocketOperation.Reply,
+      o: JSON.stringify(DEFAULT_TICKER_SUBSCRIPTION),
+    },
+    UnsubscribeTicker: {
+      m: SocketOperation.Reply,
+      o: JSON.stringify({
+        result: true,
+        errormsg: null,
+        errorcode: 0,
+        detail: null,
+      }),
     },
   };
 

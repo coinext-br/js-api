@@ -245,3 +245,12 @@ export type EventCallback = (p: IPayload) => void;
 export type InstrumentTradeHistory = number[][];
 
 export type DisposeSubscription = () => void;
+
+export interface DefaultAPIResponse {
+  result: boolean;
+  errormsg: string;
+  errorcode: number;
+  detail: string;
+}
+
+export type SubscribeTickerCallback = (update: InstrumentTradeHistory) => void;
