@@ -182,7 +182,16 @@ export declare type ISubscribeAccountEventsResponse = {
 };
 export interface SubscriptionResponse {
     firstPayload: IPayload;
-    disposer: () => void;
+    dispose: DisposeSubscription;
 }
 export declare type EventCallback = (p: IPayload) => void;
+export declare type InstrumentTradeHistory = number[][];
+export declare type DisposeSubscription = () => void;
+export interface DefaultAPIResponse {
+    result: boolean;
+    errormsg: string;
+    errorcode: number;
+    detail: string;
+}
+export declare type SubscribeTickerCallback = (update: InstrumentTradeHistory) => void;
 export {};
