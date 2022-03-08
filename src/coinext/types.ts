@@ -237,6 +237,11 @@ export type ISubscribeAccountEventsResponse = {
 
 export interface SubscriptionResponse {
   firstPayload: IPayload;
+  dispose: DisposeSubscription;
 }
 
 export type EventCallback = (p: IPayload) => void;
+
+export type InstrumentTradeHistory = number[][];
+
+export type DisposeSubscription = () => void;

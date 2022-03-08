@@ -1,5 +1,6 @@
 import WebSocket from "ws";
 import config from "../config";
+import { APSubscriptions } from "./subscriptions";
 import { EventCallback, IPayload, IPayloadRequest, IServiceName, SocketOperation, SubscriptionResponse } from "./types";
 
 class CoinextWebSocket {
@@ -7,7 +8,7 @@ class CoinextWebSocket {
   private minimumSystemIndexIncrement: number = 2;
   private socket: WebSocket | null = null;
   private isTestEnvironment = false;
-  private eventListeners = new Map<string, EventCallback>();
+  private subscriptions = new APSubscriptions();
 
   constructor(isTestEnvironment = false) {
     this.isTestEnvironment = isTestEnvironment;
@@ -21,11 +22,10 @@ class CoinextWebSocket {
         this.socket.on("message", (frame: string) => {
           console.log(`New frame received ${frame}`);
 
-          const { m: responseType, n: responseFunction, o: response } = JSON.parse(frame) as IPayloadRequest;
-          if (responseType === SocketOperation.Event && this.eventListeners.has(responseFunction)) {
-            const eventCallback = this.eventListeners.get(responseFunction) as EventCallback;
+          const { m: messageType, n: functionName, o: response } = JSON.parse(frame) as IPayloadRequest;
+          if (messageType === SocketOperation.Event) {
             const callbackPayload = JSON.parse(response);
-            eventCallback(callbackPayload);
+            this.subscriptions.runCallbacks(functionName, callbackPayload);
           }
         });
         try {
@@ -108,9 +108,10 @@ class CoinextWebSocket {
     return new Promise<SubscriptionResponse>((resolve, reject) => {
       this.callExternalApi(apiServiceName, payload)
         .then((firstResponse) => {
-          this.eventListeners.set(apiEventName, callback);
+          const disposeSubscription = this.subscriptions.addSubscription(apiEventName, callback);
           resolve({
             firstPayload: firstResponse,
+            dispose: disposeSubscription,
           });
         })
         .catch((e) => {
@@ -120,14 +121,13 @@ class CoinextWebSocket {
     });
   };
 
-  unsubscribeToEvent = async (apiUnsubscribeServiceName: IServiceName, apiEventName: string, payload: IPayload) => {
+  unsubscribeToEvent = async (apiUnsubscribeServiceName: IServiceName, payload: IPayload) => {
     await this.callExternalApi(apiUnsubscribeServiceName, payload);
-    this.eventListeners.delete(apiEventName);
   };
 
   getNumberOfListeners = (serviceName: string) => {
     return this.socket ? this.socket.listenerCount(serviceName) : 0;
-  }
+  };
 }
 
 export default CoinextWebSocket;

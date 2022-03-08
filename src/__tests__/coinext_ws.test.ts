@@ -49,7 +49,8 @@ describe("CoinextWebSocket", () => {
 
     expect(receivedValue).toBe(1);
 
-    await clientSocket.unsubscribeToEvent("UnsubscriptionTest", "EventTest", {});
+    await clientSocket.unsubscribeToEvent("UnsubscriptionTest", {});
+    subscriptionResponse.dispose();
 
     mockedServer.sendEventMessageThroughAllSockets("EventTest", { received: 2 }, 8);
 
