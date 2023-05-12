@@ -63,7 +63,7 @@ describe("Coinext", () => {
     const insterval = 15 * 60;
     const fromDate = new Date(Date.now() - 1000 * 60 * 60);
     const toDate = new Date();
-    const { history } = await coinext.getTickerHistory("BTC", insterval, fromDate, toDate);
+    const { history } = await coinext.getTickerHistory("BTC", "BRL", insterval, fromDate, toDate);
     expect(history?.length).toEqual(4);
   });
 

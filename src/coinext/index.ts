@@ -313,8 +313,8 @@ class Coinext {
     }
   }
 
-  getTickerHistory = async (coin: string, intervalInSeconds: number, fromDate: Date, toDate: Date) => {
-    const instrument = this.instrumentForCoin(coin);
+  getTickerHistory = async (coin: string, quoteCoin: string, intervalInSeconds: number, fromDate: Date, toDate: Date) => {
+    const instrument = this.instrumentForCoin(coin, quoteCoin);
     if (instrument) {
       const { response, errorMessage } = await this.safeCall("GetTickerHistory", {
         OMSId: 1,
@@ -330,9 +330,10 @@ class Coinext {
     }
   };
 
-  private instrumentForCoin(coin: string) {
-    const symbol = `${coin.toUpperCase()}BRL`;
-    return this.getInstruments().find((i) => i.Symbol === symbol);
+  private instrumentForCoin(coin: string, quoteCoin: string) {
+    const p1 = coin.toUpperCase();
+    const p2 = quoteCoin.toUpperCase();
+    return this.getInstruments().find((i) => i.Product1Symbol === p1 && i.Product2Symbol === p2);
   }
 
   getDeposits = async (accountId: number): Promise<IGetDepositsResponse> => {

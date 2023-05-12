@@ -24,7 +24,7 @@ declare class Coinext {
         errorMessage: string;
         response?: undefined;
     }>;
-    getTickerHistory: (coin: string, intervalInSeconds: number, fromDate: Date, toDate: Date) => Promise<{
+    getTickerHistory: (coin: string, quoteCoin: string, intervalInSeconds: number, fromDate: Date, toDate: Date) => Promise<{
         history: IPayload | undefined;
         errorMessage: string;
     } | {
