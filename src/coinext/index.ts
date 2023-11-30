@@ -64,7 +64,7 @@ class Coinext {
     const instrumentsResponse = await this.socket?.callExternalApi("GetInstruments", { OMSId: this.omsId });
     this.instruments = instrumentsResponse as unknown as IInstrument[];
 
-    const productsResponse = await this.socket?.callExternalApi("GetProducts", { OMSId: this.omsId });
+    const productsResponse = await this.socket?.callExternalApi("GetProducts", { OMSId: this.omsId, Depth: 250, });
     const pr: IPayload[] = productsResponse as unknown as IPayload[];
     this.products = pr.map((p) => ({ ProductId: Number(p.ProductId), Product: p.Product as unknown as ProductName }));
   };
