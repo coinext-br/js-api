@@ -6,21 +6,21 @@ export declare enum SocketOperation {
     UnSubscribeFromEvent = 4,
     Error = 5
 }
-export declare type IPayloadRequest = {
+export type IPayloadRequest = {
     i: number;
     n: IServiceName;
     m: number;
     o: string;
 };
-export declare type IServiceName = "AuthenticateUser" | "Authenticate2FA" | "GetUserAccounts" | "GetAccountPositions" | "GetDepositInfo" | "GetInstruments" | "GetL2Snapshot" | "SubscribeAccountEvents" | "GetDeposits" | "GetTickerHistory" | "GetProducts" | "TransferFunds" | string;
-export declare type DepositInfo = {
+export type IServiceName = "AuthenticateUser" | "Authenticate2FA" | "GetUserAccounts" | "GetAccountPositions" | "GetDepositInfo" | "GetInstruments" | "GetL2Snapshot" | "SubscribeAccountEvents" | "GetDeposits" | "GetTickerHistory" | "GetProducts" | "TransferFunds" | string;
+export type DepositInfo = {
     productId: number;
     amount: number;
     assetName: string;
     toAddress: string;
     ticketStatus: string;
 };
-export declare type ITransferFundsResponse = {
+export type ITransferFundsResponse = {
     success: boolean;
     errorMessage: string;
     details: {
@@ -39,28 +39,28 @@ export declare type ITransferFundsResponse = {
         lastUpdatedTimeInTicks: number;
     } | null;
 };
-export declare type IGetDepositsResponse = {
+export type IGetDepositsResponse = {
     deposits: DepositInfo[];
     isEmpty: boolean;
     errorMessage: string;
 };
-export declare type ILoginResponse = {
+export type ILoginResponse = {
     accountId: number;
     errorMessage: string;
     authenticated: boolean;
 };
-export declare type IDepositInfoResponse = {
+export type IDepositInfoResponse = {
     currencyDepositAddress: string[];
     errorMessage: string;
 };
-export declare type ISimpleLoginResponse = {
+export type ISimpleLoginResponse = {
     errorMessage: string;
     authenticated: boolean;
     isAuthenticatorEnabled: boolean;
     token: string;
     userId: number;
 };
-export declare type InstrumentSymbol = "BTCBRL" | "USDTBRL" | string;
+export type InstrumentSymbol = "BTCBRL" | "USDTBRL" | string;
 declare enum ProductId {
     Blr = 1,
     Btc = 2,
@@ -75,15 +75,15 @@ declare enum ProductId {
     Eos = 11,
     Xlm = 12
 }
-export declare type ProductName = "BRL" | "BTC" | "LTC" | "ETH" | "XRP" | "BCH" | "USDT" | "LINK" | "DOGE" | "ADA" | "EOS" | "XLM" | "CHZ" | "SUSHI" | "USDC" | "AXS" | "BNB" | string;
-export declare type Product = {
+export type ProductName = "BRL" | "BTC" | "LTC" | "ETH" | "XRP" | "BCH" | "USDT" | "LINK" | "DOGE" | "ADA" | "EOS" | "XLM" | "CHZ" | "SUSHI" | "USDC" | "AXS" | "BNB" | string;
+export type Product = {
     ProductId: ProductId;
     Product: ProductName;
 };
-export declare type IPayload = {
+export type IPayload = {
     [key: string]: string | number | boolean | IPayload | IPayload[] | null;
 };
-export declare type IInstrument = {
+export type IInstrument = {
     OMSId: number;
     InstrumentId: number;
     Symbol: string;
@@ -136,7 +136,7 @@ export declare enum OrderSide {
     Short = 2,
     Unknown = 3
 }
-export declare type IApiBookOrderResponse = [
+export type IApiBookOrderResponse = [
     number,
     number,
     number,
@@ -148,7 +148,7 @@ export declare type IApiBookOrderResponse = [
     number,
     OrderSide
 ];
-export declare type IBookOrder = {
+export type IBookOrder = {
     updateId: number;
     uniqueAccountsQuantity: number;
     posixActionDateTime: number;
@@ -160,38 +160,38 @@ export declare type IBookOrder = {
     quantity: number;
     side: OrderSide;
 };
-export declare type IBookOrderResquest = {
+export type IBookOrderResquest = {
     instrumentId: number;
     howMany: number;
     side: OrderSide;
 };
-export declare type IBookOrderResponse = {
+export type IBookOrderResponse = {
     orders: IBookOrder[];
     errorMessage: string;
     isEmpty: boolean;
 };
-export declare type IInstrumentIdResponse = {
+export type IInstrumentIdResponse = {
     instrumentId: number;
     errorMessage: string;
 };
-export declare type ISubscribeAccountEventsResquest = {
+export type ISubscribeAccountEventsResquest = {
     accountId: number;
 };
-export declare type ISubscribeAccountEventsResponse = {
+export type ISubscribeAccountEventsResponse = {
     subscribed: boolean;
 };
 export interface SubscriptionResponse {
     firstPayload: IPayload;
     dispose: DisposeSubscription;
 }
-export declare type EventCallback = (p: IPayload) => void;
-export declare type InstrumentTradeHistory = number[][];
-export declare type DisposeSubscription = () => void;
+export type EventCallback = (p: IPayload) => void;
+export type InstrumentTradeHistory = number[][];
+export type DisposeSubscription = () => void;
 export interface DefaultAPIResponse {
     result: boolean;
     errormsg: string;
     errorcode: number;
     detail: string;
 }
-export declare type SubscribeTickerCallback = (update: InstrumentTradeHistory) => void;
+export type SubscribeTickerCallback = (update: InstrumentTradeHistory) => void;
 export {};
